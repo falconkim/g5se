@@ -19,12 +19,11 @@ include_once(G5_PATH.'/head.sub.php');
             엑셀파일을 이용하여 상품을 일괄등록할 수 있습니다.<br>
             형식은 <strong>상품일괄등록용 엑셀파일</strong>을 다운로드하여 상품 정보를 입력하시면 됩니다.<br>
             수정 완료 후 엑셀파일을 업로드하시면 상품이 일괄등록됩니다.<br>
-            엑셀파일은 반드시 <strong>Excel 통합 문서 (*.xlsx)</strong> 형식으로 저장한 뒤 업로드해 주세요.<br>
-            양식 파일은 구버전(.xls) 형식이므로, 파일을 연 뒤 <strong>다른 이름으로 저장</strong>에서 .xlsx 형식을 선택하여 사용하시기 바랍니다.
+            엑셀파일은 반드시 <strong>Excel 통합 문서 (*.xlsx)</strong> 형식으로 저장한 뒤 업로드해 주세요.
         </p>
 
         <p>
-            <a href="<?php echo G5_URL; ?>/<?php echo G5_LIB_DIR; ?>/Excel/itemexcel.xls">상품일괄등록용 엑셀파일 다운로드</a>
+            <a href="<?php echo G5_URL; ?>/<?php echo G5_LIB_DIR; ?>/Excel/itemexcel.xlsx">상품일괄등록용 엑셀파일 다운로드</a>
         </p>
     </div>
 
