@@ -18,13 +18,19 @@ $sms_messages = array();
 if(isset($_FILES['excelfile']['tmp_name']) && $_FILES['excelfile']['tmp_name']) {
     $file = $_FILES['excelfile']['tmp_name'];
 
-    require_once dirname(__DIR__, 3).'/vendor/autoload.php';
+    require_once G5_LIB_PATH.'/SimpleXLSX.php';
 
-    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file);
-    $sheet = $spreadsheet->getSheet(0);
+    $upload_name = isset($_FILES['excelfile']['name']) ? $_FILES['excelfile']['name'] : '';
+    if (strtolower(pathinfo($upload_name, PATHINFO_EXTENSION)) === 'xls') {
+        alert('구버전 엑셀(.xls) 파일은 지원하지 않습니다. 엑셀에서 .xlsx 형식으로 다시 저장한 뒤 올려주세요.');
+    }
 
-    $num_rows = $sheet->getHighestRow();
-    $highestColumn = $sheet->getHighestColumn();
+    $xlsx = \Shuchkin\SimpleXLSX::parse($file);
+    if (!$xlsx) {
+        alert('엑셀 파일을 읽을 수 없습니다. .xlsx 형식인지 확인해 주세요.');
+    }
+    $excel_rows = $xlsx->rows();
+    $num_rows = count($excel_rows);
 
     $fail_od_id = array();
     $total_count = 0;
@@ -32,13 +38,10 @@ if(isset($_FILES['excelfile']['tmp_name']) && $_FILES['excelfile']['tmp_name']) 
     $succ_count = 0;
 
     // $i 사용시 ordermail.inc.php의 $i 때문에 무한루프에 빠짐
-    for ($k = 2; $k <= $num_rows; $k++) {
+    for ($k = 1; $k < $num_rows; $k++) {
         $total_count++;
 
-        $rowData = $sheet->rangeToArray('A' . $k . ':' . $highestColumn . $k,
-                                            NULL,
-                                            TRUE,
-                                            FALSE);
+        $rowData = array(array_pad($excel_rows[$k], 10, ''));
 
         $od_id               = isset($rowData[0][0]) ? addslashes(trim($rowData[0][0])) : '';
         $od_delivery_company = isset($rowData[0][8]) ? addslashes($rowData[0][8]) : '';

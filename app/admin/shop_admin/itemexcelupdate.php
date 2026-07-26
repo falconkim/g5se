@@ -27,13 +27,19 @@ if( ! $is_upload_file){
 if($is_upload_file) {
     $file = $_FILES['excelfile']['tmp_name'];
 
-    require_once dirname(__DIR__, 3).'/vendor/autoload.php';
+    require_once G5_LIB_PATH.'/SimpleXLSX.php';
 
-    $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file);
-    $sheet = $spreadsheet->getSheet(0);
+    $upload_name = isset($_FILES['excelfile']['name']) ? $_FILES['excelfile']['name'] : '';
+    if (strtolower(pathinfo($upload_name, PATHINFO_EXTENSION)) === 'xls') {
+        alert('구버전 엑셀(.xls) 파일은 지원하지 않습니다. 엑셀에서 .xlsx 형식으로 다시 저장한 뒤 올려주세요.');
+    }
 
-    $num_rows = $sheet->getHighestRow();
-    $highestColumn = $sheet->getHighestColumn();
+    $xlsx = \Shuchkin\SimpleXLSX::parse($file);
+    if (!$xlsx) {
+        alert('엑셀 파일을 읽을 수 없습니다. .xlsx 형식인지 확인해 주세요.');
+    }
+    $excel_rows = $xlsx->rows();
+    $num_rows = count($excel_rows);
 
     $dup_it_id = array();
     $fail_it_id = array();
@@ -42,15 +48,11 @@ if($is_upload_file) {
     $fail_count = 0;
     $succ_count = 0;
 
-    for ($i = 3; $i <= $num_rows; $i++) {
+    for ($i = 2; $i < $num_rows; $i++) {
         $total_count++;
 
         $j = 0;
-
-        $rowData = $sheet->rangeToArray('A' . $i . ':' . $highestColumn . $i,
-                                            NULL,
-                                            TRUE,
-                                            FALSE);
+        $rowData = array(array_pad($excel_rows[$i], 40, ''));
 
         $it_id              = (string) $rowData[0][$j++];
         $it_id              = preg_match('/[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)/', $it_id) ? addslashes(sprintf("%.0f", $it_id)) : preg_replace('/[^0-9a-z_\-]/i', '', $it_id);
