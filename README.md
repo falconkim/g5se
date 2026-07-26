@@ -31,6 +31,11 @@ mysql -u root -e "CREATE DATABASE g5se CHARACTER SET utf8mb4 COLLATE utf8mb4_uni
 
 브라우저로 `/install/` 접근 → 마법사 따라 진행.
 
+## 업데이트
+
+- g5se 는 composer 를 사용하지 않습니다. 서드파티 라이브러리는 모두 `app/lib/` 등에 직접 번들되며, 그 목록은 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) 가 대장입니다.
+- 구버전(composer 사용 시절)에서 업데이트했다면 서버에 남아 있는 `vendor/` 디렉터리는 더 이상 로드되지 않으므로 삭제하세요.
+
 ## 사용자 모듈 (`app/modules/`)
 
 파일 하나만 두면 자동으로 라우팅되는 폴더 기반 모듈 시스템. Next.js app router 의 핵심 컨벤션을 PHP/gnuboard 맥락으로 단순화했습니다.
