@@ -22,6 +22,9 @@ RewriteRule ^adm/?$ /admin [R=301,L]
 RewriteRule ^adm/(.*)$ /admin/$1 [R=301,L]
 RewriteRule ^(theme|skin|img|js|css|plugin)/(.*)$ app/$1/$2 [END]
 
+#    lib 의 다운로드 양식 파일 (상품일괄등록 엑셀 등) — 양식 확장자만 좁게 매핑
+RewriteRule ^lib/Excel/([^/]+\.xlsx)$ app/lib/Excel/$1 [END]
+
 #    모던 admin 의 정적 자산: /admin/(css|js|img)/... → app/admin/$1/$2
 #    (.php 컨트롤러는 front controller 가 처리해야 하므로 정적 자산만 매핑)
 RewriteRule ^admin/(css|js|img)/(.*)$ app/admin/$1/$2 [END]
