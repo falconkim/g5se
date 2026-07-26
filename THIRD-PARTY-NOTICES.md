@@ -4,7 +4,9 @@
 
 이 저장소에는 제3자가 저작권을 보유한 여러 구성요소가 함께 번들되어 있습니다. **이들 구성요소는 각자의 원 라이선스가 그대로 유지되며, 루트 MIT 라이선스의 적용을 받지 않습니다.** 아래 표는 카테고리별로 번들된 제3자 구성요소와 그 라이선스·저작권자를 정리한 것입니다.
 
-경로는 저장소 루트(`/home/kagla/g5se`) 기준 상대경로입니다.
+경로는 저장소 루트 기준 상대경로입니다.
+
+g5se는 composer(`composer.json` / `vendor/`)를 사용하지 않습니다. 모든 제3자 라이브러리는 저장소에 직접 번들되며, **이 문서가 번들 서드파티의 유일한 대장(목록)입니다.** 라이브러리를 추가·갱신·제거할 때는 이 문서를 함께 갱신해 주세요.
 
 ---
 
@@ -14,7 +16,7 @@
 
 | 구성요소 | 경로 | 라이선스 | 저작권자 |
 |---|---|---|---|
-| PHPMailer | `vendor/phpmailer/phpmailer/` | LGPL-2.1-only | PHPMailer authors |
+| PHPMailer 6.12.0 | `app/lib/PHPMailer/` (라이선스 전문: `app/lib/PHPMailer/LICENSE`, 출처: https://github.com/PHPMailer/PHPMailer ) | LGPL-2.1-only | PHPMailer authors |
 | HTML Purifier | `app/plugin/htmlpurifier/` | LGPL-2.1 | Edward Z. Yang |
 | SmartEditor2 | `app/plugin/editor/smarteditor2/` | LGPL-2.1 | NAVER Corp. |
 | sha256 | `app/shop/inicis/libs/sha256.inc.php` | LGPL-2.1 | Nanolink Solutions |
@@ -80,7 +82,8 @@ SIR(에스아이알소프트) 자신이 저작권을 보유하고 LGPL로 배포
 | TwitterOAuth | `app/plugin/sns/twitter` | Abraham Williams |
 | blueimp fileupload / SWFUpload | `app/plugin/editor/smarteditor2/` (동봉) | Sebastian Tschan / SWFUpload team |
 | PHP-Hook | `app/lib/Hook` | PHP-Hook authors |
-| PhpSpreadsheet 외 vendor 다수 | `vendor/` | 각 저작권자 (composer.json 참조) |
+| SimpleXLSXGen 1.5.17 | `app/lib/SimpleXLSXGen.php` (출처: https://github.com/shuchkin/simplexlsxgen ) | Sergey Shuchkin |
+| SimpleXLSX 1.1.16 | `app/lib/SimpleXLSX.php` (출처: https://github.com/shuchkin/simplexlsx ) | Sergey Shuchkin |
 
 ### BSD
 
