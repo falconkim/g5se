@@ -81,7 +81,8 @@ function main_member_export($params)
     $fileName = 'member_'.MEMBER_BASE_DATE;
     $fileList = [];
     $zipFileName = '';
-    
+    $pages = 1; // 단일 청크(분할 없음) 기본값. 분할 처리 시 아래에서 재계산.
+
     if ($total > MEMBER_EXPORT_PAGE_SIZE) {
         // 대용량 데이터 - 분할 처리
         $pages = (int)ceil($total / MEMBER_EXPORT_PAGE_SIZE);
