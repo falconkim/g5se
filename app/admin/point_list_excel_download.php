@@ -7,7 +7,7 @@ require_once __DIR__.'/_common.php';
 require_once __DIR__.'/_layout.php';
 admin_require_login();
 require_once G5_ADMIN_PATH.'/admin.lib.php';
-require_once dirname(__DIR__, 2).'/vendor/autoload.php';
+require_once G5_LIB_PATH.'/excel.lib.php';
 
 auth_check_menu($auth, $sub_menu, 'r');
 
@@ -69,24 +69,10 @@ $sql = "SELECT po.mb_id, mb.mb_name, mb.mb_nick, po.po_content, po.po_point,
          LIMIT {$offset}, {$limit}";
 $result = sql_pdo_query($sql, $params);
 
-$excel = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-$sheet = $excel->getActiveSheet();
-$sheet->setTitle('포인트 내역');
 $headers = array('회원아이디', '이름', '닉네임', '내용', '포인트', '일시', '만료일', '만료 여부', '처리 후 포인트');
-foreach ($headers as $index => $header) {
-    $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index + 1).'1';
-    $sheet->setCellValueExplicit($cell, $header, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-}
-$sheet->getStyle('A1:I1')->getFont()->setBold(true);
-$sheet->getStyle('A1:I1')->getFill()
-    ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-    ->getStartColor()->setRGB('D9EAF7');
-$sheet->freezePane('A2');
-$sheet->setAutoFilter('A1:I1');
-
-$rowNumber = 2;
+$rows = array();
 while ($row = sql_pdo_fetch_array($result)) {
-    $values = array(
+    $rows[] = array(
         $row['mb_id'],
         $row['mb_name'],
         $row['mb_nick'],
@@ -97,33 +83,13 @@ while ($row = sql_pdo_fetch_array($result)) {
         (int)$row['po_expired'] === 1 ? '만료' : '유효',
         $row['po_mb_point'],
     );
-    foreach ($values as $index => $value) {
-        $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index + 1).$rowNumber;
-        $sheet->setCellValueExplicit($cell, (string)$value, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-    }
-    $rowNumber++;
 }
-
-foreach (array(20, 16, 16, 50, 14, 22, 14, 12, 18) as $index => $width) {
-    $sheet->getColumnDimensionByColumn($index + 1)->setWidth($width);
-}
-$sheet->getStyle('A:I')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-
-while (ob_get_level() > 0) {
-    ob_end_clean();
-}
-session_write_close();
 
 $startNumber = $offset + 1;
 $endNumber = $offset + $limit;
 $filename = 'points_'.str_replace('-', '', $frDate).'_'.str_replace('-', '', $toDate).'_'.$startNumber.'-'.$endNumber.'_'.date('Ymd_His').'.xlsx';
-header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-header('Content-Disposition: attachment; filename="'.$filename.'"');
-header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-header('X-Content-Type-Options: nosniff');
 
-$writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($excel);
-$writer->setPreCalculateFormulas(false);
-$writer->save('php://output');
-$excel->disconnectWorksheets();
-exit;
+excel_download($filename, '포인트 내역', $headers, $rows, array(
+    'widths' => array(20, 16, 16, 50, 14, 22, 14, 12, 18),
+    'header_bg' => '#D9EAF7',
+));

@@ -10,7 +10,7 @@ require_once __DIR__.'/_layout.php';
 admin_require_login();
 require_once __DIR__.'/admin.lib.php';
 require_once G5_LIB_PATH.'/visit.lib.php';
-require_once dirname(__DIR__, 2).'/vendor/autoload.php';
+require_once G5_LIB_PATH.'/excel.lib.php';
 
 auth_check_menu($auth, $sub_menu, 'r');
 
@@ -73,23 +73,9 @@ if ($total > VISIT_EXCEL_MAX_SIZE) {
 function visit_excel_create_file($sql, $params, $isSuper, $sheetTitle)
 {
     $result = sql_pdo_query($sql, $params);
-    $excel = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-    $sheet = $excel->getActiveSheet();
-    $sheet->setTitle($sheetTitle);
     $headers = array('IP', '접속 경로', '브라우저', 'OS', '접속기기', '일시');
+    $rows = array();
 
-    foreach ($headers as $index => $header) {
-        $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index + 1).'1';
-        $sheet->setCellValueExplicit($cell, $header, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-    }
-    $sheet->getStyle('A1:F1')->getFont()->setBold(true);
-    $sheet->getStyle('A1:F1')->getFill()
-        ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-        ->getStartColor()->setRGB('D9EAF7');
-    $sheet->freezePane('A2');
-    $sheet->setAutoFilter('A1:F1');
-
-    $rowNumber = 2;
     while ($row = sql_pdo_fetch_array($result)) {
         $browser = $row['vi_browser'] ?: get_brow($row['vi_agent']);
         $os = $row['vi_os'] ?: get_os($row['vi_agent']);
@@ -104,18 +90,8 @@ function visit_excel_create_file($sql, $params, $isSuper, $sheetTitle)
         if (!$isSuper) {
             $ip = preg_replace('/([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)/', G5_IP_DISPLAY, $ip);
         }
-        $values = array($ip, $referer, $browser, $os, $row['vi_device'], $row['vi_date'].' '.$row['vi_time']);
-        foreach ($values as $index => $value) {
-            $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index + 1).$rowNumber;
-            $sheet->setCellValueExplicit($cell, (string)$value, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-        }
-        $rowNumber++;
+        $rows[] = array($ip, $referer, $browser, $os, $row['vi_device'], $row['vi_date'].' '.$row['vi_time']);
     }
-
-    foreach (array(18, 60, 18, 18, 16, 22) as $index => $width) {
-        $sheet->getColumnDimensionByColumn($index + 1)->setWidth($width);
-    }
-    $sheet->getStyle('A:F')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
 
     $basePath = tempnam(sys_get_temp_dir(), 'g5se_visit_');
     if ($basePath === false) {
@@ -123,11 +99,15 @@ function visit_excel_create_file($sql, $params, $isSuper, $sheetTitle)
     }
     $filePath = $basePath.'.xlsx';
     @unlink($basePath);
-    $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($excel);
-    $writer->setPreCalculateFormulas(false);
-    $writer->save($filePath);
-    $excel->disconnectWorksheets();
-    unset($writer, $excel);
+
+    $xlsx = excel_xlsx($sheetTitle, $headers, $rows, array(
+        'widths' => array(18, 60, 18, 18, 16, 22),
+        'header_bg' => '#D9EAF7',
+    ));
+    if (!$xlsx->saveAs($filePath)) {
+        throw new RuntimeException('임시 XLSX 파일을 저장하지 못했습니다.');
+    }
+    unset($xlsx, $rows);
     return $filePath;
 }
 
