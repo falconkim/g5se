@@ -144,13 +144,7 @@ if ($csv == 'csv')
     exit;
 }
 
-if(! function_exists('column_char')) {
-    function column_char($i) {
-        return chr( 65 + $i );
-    }
-}
-
-// MS엑셀 XLS 데이터로 다운로드 받음
+// MS엑셀 XLSX 데이터로 다운로드 받음
 if ($csv == 'xls')
 {
     $fr_date = date_conv($fr_date);
@@ -171,14 +165,13 @@ if ($csv == 'xls')
     if (!$cnt)
         alert("출력할 내역이 없습니다.");
 
-        require_once dirname(__DIR__, 3).'/vendor/autoload.php';
+        require_once G5_LIB_PATH.'/excel.lib.php';
 
         $headers = array('우편번호', '주소', '이름', '전화1', '전화2', '상품명', '수량', '선택사항', '배송비', '상품코드', '주문번호', '운송장번호', '전하실말씀');
         $widths  = array(10, 30, 10, 15, 15, 15, 10, 10, 20, 15, 20, 20, 50);
-        $header_bgcolor = 'FFABCDEF';
-        $last_char = column_char(count($headers) - 1);
+        $rows = array();
 
-        for($i=1; $row=sql_pdo_fetch_array($result); $i++) {
+        while ($row = sql_pdo_fetch_array($result)) {
 
             $pull_address = print_address($row['od_b_addr1'], $row['od_b_addr2'], $row['od_b_addr3'], $row['od_b_addr_jibeon']);
             
@@ -219,42 +212,32 @@ if ($csv == 'xls')
                 $ct_send_cost = $ct_send_cost;
             }
 
-            $rows[] = array(' '.$row['od_b_zip1'].$row['od_b_zip2'],
+            $rows[] = array($row['od_b_zip1'].$row['od_b_zip2'],
                             $pull_address,
-                            $row['od_b_name'], 
-                            ' '.conv_telno($row['od_b_tel']), 
-                            ' '.conv_telno($row['od_b_hp']), 
-                            preg_replace("/\"/", "&#034;", $row['it_name']), 
-                            ' '.$row['ct_qty'], 
-                            $row['ct_option'], 
+                            $row['od_b_name'],
+                            conv_telno($row['od_b_tel']),
+                            conv_telno($row['od_b_hp']),
+                            preg_replace("/\"/", "&#034;", $row['it_name']),
+                            $row['ct_qty'],
+                            $row['ct_option'],
                             $ct_send_cost,
-                            ' '.$row['it_id'],
-                            ' '.$row['od_id'],
-                            ' '.$row['od_invoice'],
+                            $row['it_id'],
+                            $row['od_id'],
+                            $row['od_invoice'],
                             preg_replace("/\"/", "&#034;", $row['od_memo']));
         }
 
-        $data = array_merge(array($headers), $rows);
-
         // 각 셀 값을 문자열로 강제 (스프레드시트가 = 로 시작하는 값을 수식으로 평가하지 않도록)
         if (function_exists('csv_safe_cell')) {
-            foreach ($data as $ri => $r) {
-                foreach ($r as $ci => $c) $data[$ri][$ci] = csv_safe_cell($c);
+            foreach ($rows as $ri => $r) {
+                foreach ($r as $ci => $c) $rows[$ri][$ci] = csv_safe_cell($c);
             }
         }
 
-        $excel = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $excel->setActiveSheetIndex(0)->getStyle( "A1:{$last_char}1" )->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($header_bgcolor);
-        $excel->setActiveSheetIndex(0)->getStyle( "A:$last_char" )->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)->setWrapText(true);
-        foreach($widths as $i => $w) $excel->setActiveSheetIndex(0)->getColumnDimension( column_char($i) )->setWidth($w);
-        $excel->getActiveSheet()->fromArray($data,NULL,'A1');
-
-        header("Content-Type: application/octet-stream");
-        header("Content-Disposition: attachment; filename=\"orderlist-".date("ymd", time()).".xls\"");
-        header("Cache-Control: max-age=0");
-
-        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($excel, 'Xls');
-        $writer->save('php://output');
+        excel_download('orderlist-'.date("ymd", time()).'.xlsx', '주문내역', $headers, $rows, array(
+            'widths' => $widths,
+            'header_bg' => '#ABCDEF',
+        ));
 }
 
 
