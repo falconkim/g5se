@@ -12,7 +12,7 @@ require_once __DIR__.'/_layout.php';
 admin_require_login();
 require_once __DIR__.'/admin.lib.php';
 require_once __DIR__.'/member_list_exel.lib.php'; // 회원관리파일 공통 라이브러리 (상수, 검색 옵션 설정, SQL WHERE 등)
-require_once dirname(__DIR__, 2).'/vendor/autoload.php';
+require_once G5_LIB_PATH.'/excel.lib.php';
 
 if (function_exists('check_demo')) {
     check_demo();
@@ -193,14 +193,6 @@ function member_export_set_sse_headers()
 }
 
 /**
- * 엑셀 컬럼 문자 반환
- */
-function member_export_column_char($i) 
-{
-    return chr(65 + $i);
-}
-
-/**
  * 회원 데이터 조회
  */
 function member_export_get_data($params) 
@@ -265,56 +257,38 @@ function member_export_get_data($params)
 function member_export_create_excel($data, $fileName, $index = 0) 
 {
     $config = member_export_get_config();
-    
-    if (!class_exists('PhpOffice\PhpSpreadsheet\Spreadsheet')) {
-        error_log('[Member Export Error] PhpSpreadsheet 라이브러리를 찾을 수 없습니다.');
-        throw new Exception('파일 생성 중 내부 오류가 발생했습니다: PhpSpreadsheet 라이브러리를 찾을 수 없습니다.');
-    }
 
     try {
-        $excel = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $excel->setActiveSheetIndex(0);
-        
-        // 헤더 스타일 적용
-        $last_char = member_export_column_char(count($config['headers']) - 1);
-        $sheet->getStyle("A2:{$last_char}2")->applyFromArray([
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => 'D9E1F2'], // 연파랑 배경
-            ],
+        // $data = [제목행, 헤더행, ...데이터행]
+        $title_row  = array_shift($data);
+        $header_row = array_shift($data);
+
+        $xlsx = excel_xlsx('회원목록', $header_row, $data, [
+            'widths'       => $config['widths'],
+            'header_bg'    => '#D9E1F2', // 연파랑 배경
+            'prepend_rows' => [$title_row],
         ]);
-        
-        // 셀 정렬 및 줄바꿈 설정
-        $sheet->getStyle("A:{$last_char}")->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)->setWrapText(true);
-        
-        // 컬럼 너비 설정
-        foreach ($config['widths'] as $i => $width) {
-            $sheet->getColumnDimension(member_export_column_char($i))->setWidth($width);
-        }
-        
-        // 데이터 입력
-        $sheet->fromArray($data, NULL, 'A1');
 
         // 디렉토리 확인
         member_export_ensure_directory(MEMBER_EXPORT_DIR);
-        
+
         // 파일명 생성
         $subname = $index == 0 ? 'all' : sprintf("%02d", $index);
         $filename = $fileName . "_" . $subname . ".xlsx";
         $filePath = MEMBER_EXPORT_DIR . "/" . $filename;
 
         // 파일 저장
-        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($excel, 'Xlsx');
-        $writer->setPreCalculateFormulas(false);
-        $writer->save($filePath);
+        if (!$xlsx->saveAs($filePath)) {
+            throw new Exception("파일을 저장하지 못했습니다.");
+        }
 
-        unset($excel, $sheet, $writer); // 생성 완료 후 메모리 해제        
-    } 
-    catch (Exception $e) 
+        unset($xlsx, $data); // 생성 완료 후 메모리 해제
+    }
+    catch (Exception $e)
     {
         throw new Exception("엑셀 파일 생성에 실패하였습니다: " . $e->getMessage());
     }
-    
+
     return $filename;
 }
 
