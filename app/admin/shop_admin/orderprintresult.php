@@ -237,6 +237,7 @@ if ($csv == 'xls')
         excel_download('orderlist-'.date("ymd", time()).'.xlsx', '주문내역', $headers, $rows, array(
             'widths' => $widths,
             'header_bg' => '#ABCDEF',
+            'wrap_cols' => array(1, 12), // 주소, 전하실말씀
         ));
 }
 

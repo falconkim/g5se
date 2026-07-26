@@ -47,4 +47,5 @@ if (function_exists('csv_safe_cell')) {
 excel_download('deliverylist-'.date("ymd", time()).'.xlsx', '배송처리', $headers, $rows, array(
     'widths' => $widths,
     'header_bg' => '#ABCDEF',
+    'wrap_cols' => array(7), // 배송지주소
 ));
