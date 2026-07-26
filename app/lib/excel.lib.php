@@ -73,6 +73,8 @@ function excel_download($filename, $sheet_name, $headers, $rows, $opts = array()
         ob_end_clean();
     }
     session_write_close();
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('X-Content-Type-Options: nosniff');
     excel_xlsx($sheet_name, $headers, $rows, $opts)->downloadAs($filename);
     exit;
 }
